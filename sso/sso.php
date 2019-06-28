@@ -42,7 +42,7 @@ foreach ($network as $delta => $site) {
 }
 $network = array_values($network);
 
-if (ltrim($host, 'a.') == $origin_domain) {
+if (ltrim($host, '.') == $origin_domain) {
   // We are on the site which has started the process.
   // No need to create the cookie, the site already handled its login / logout.
   // Start from the beginning of the redirect list.
@@ -82,8 +82,6 @@ else {
     }
   }
 }
-
-sso_debug($redirect_destination);
 
 // Redirect the user. We need to prevent the redirect from being cached.
 header('Cache-Control: max-age=0', TRUE);
@@ -135,7 +133,7 @@ function sso_create_cookie($operation) {
 
   $secure = !empty($GLOBALS['https']);
 
-  $domain = ltrim(strtolower($_SERVER['HTTP_HOST']), 'a.');
+  $domain = strtolower($_SERVER['HTTP_HOST']);
 
   if (!empty($GLOBALS['cookie_name_strict'])) {
     $remove .= '_' . $domain;
