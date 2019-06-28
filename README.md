@@ -1,19 +1,33 @@
-Important Notes on this D8-version:
+## Basic setup for an oAuth2 based SSO setup with the server site also acting as a client site:
+- Server site has oAuth2 server installed and configured as per instructions
+- Server site has openid_connect and openid_connect_sso installed and configured as per instructions
+- Server site does NOT have openid_connect_sso_client installed
+- Server site has sso.php and sso.config.php installed at the web root with the network array filled with the other network sites. The site where this is installed should be last in the array. https and strict cookies on.
 
+- Client site haste openid_connect, openid_connect_sso, and openid_connect_sso_client installed and configured
+- Client site has sso.php and sso.config.php installed at the web root with the network array filled with the other network sites. The site where this is installed should be last in the array. https and strict cookies on.
+
+- At each site's configuration form (/admin/config/services/openid-connect-sso), the cookie domain is configured for the site domain and the SSO URL points to an sso script (full url) that is not it's own. SSO is enabled. On the client site the connect client is "generic" (form defaults are currently broken).
+- The server site has an oAuth2 server configured with both sites as clients. More information in docs for that module
+- The client and server site both have openID connect configured at (/admin/config/services/openid-connect) following that module.
+
+## Important Notes on this D8-version:
 0. This is not yet on parity w/ the D7 version of openid_connect_sso.
-1. You need to patch openid_connect.module with this patch: https://www.drupal.org/files/issues/2796697-return-response-object.patch for any of this to work.
-2. This is not working with caching. This should be fixable quickly, but for the time being add this snippet to the settings.php
+1. This is not working with caching. This should be fixable quickly, but for the time being add this snippet to the settings.php
+2. There's no reason not to enable cookie_domain_strict in sso.config.php - this should probably be default
+3. There's no reason not to enable https either, oAuth2 requires https anyways
 
-if (isset($_COOKIE['Drupal_visitor_SSOLogout']) || isset($_COOKIE['Drupal_visitor_SSOLogin'])) {
+`if (isset($_COOKIE['Drupal_visitor_SSOLogout']) || isset($_COOKIE['Drupal_visitor_SSOLogin'])) {
   $settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
   $settings['cache']['bins']['render'] = 'cache.backend.null';
-}
+}`
 
 And adjust your services.yml with this chunk:
 
-services:
+`services:
   cache.backend.null:
     class: Drupal\Core\Cache\NullBackendFactory
+`
 
 3. sso.php script:
     - I have not tested the a.-Subdomain-based approach
