@@ -33,7 +33,6 @@ class RouteSubscriber extends RouteSubscriberBase {
    */
   public function handleNetworkLogout() {
     $account = \Drupal::currentUser();
-
     $needs_logout = !$account->isAnonymous() && openid_connect_sso_detect_cookie('logout');
     if ($needs_logout) {
       user_logout();
@@ -41,6 +40,22 @@ class RouteSubscriber extends RouteSubscriberBase {
     else {
       // Ensure that the logout cookie is removed.
       openid_connect_sso_remove_cookie('logout');
+    }
+  }
+
+  //AGH#16423
+  public function handleNetworkLogin(FilterResponseEvent $event) {
+    $account = \Drupal::currentUser();
+    $needsLogin = $account->isAnonymous() && openid_connect_sso_detect_cookie('login');
+    if ($needsLogin) {
+      $uri = 'user.page';
+      $url = \Drupal::url($uri);
+      $response = new TrustedRedirectResponse($url);
+      openid_connect_sso_remove_cookie('login');
+      $event->setResponse($response);
+    }
+    else {
+      openid_connect_sso_remove_cookie('login');
     }
   }
 
@@ -137,6 +152,7 @@ class RouteSubscriber extends RouteSubscriberBase {
    */
   public static function getSubscribedEvents() {
     $events[KernelEvents::REQUEST][] = array('handleNetworkLogout');
+    $events[KernelEvents::RESPONSE][] = array('handleNetworkLogin');
     $events[KernelEvents::RESPONSE][] = array('triggerNetworkRedirects', 100);
     return $events;
   }
